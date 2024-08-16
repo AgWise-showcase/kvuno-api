@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
     volumes:
-      - ./rds:/static/data:ro
+      - rds_data:/app/static/data:ro
 
     depends_on:
       - maria
@@ -64,7 +64,7 @@ services:
     restart: no
     
     volumes:
-      - ./rds:/static/data:ro
+      - rds_data:/app/static/data:ro
     depends_on:
       - maria
     networks:
@@ -80,7 +80,7 @@ services:
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
     volumes:
-      - ./rds:/static/data:ro
+      - rds_data:/app/static/data:ro
 
     depends_on:
       - maria
@@ -96,3 +96,10 @@ networks:
 volumes:
   maria-db:
     name: maria-db
+    
+  rds_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./rds
+      o: bind
