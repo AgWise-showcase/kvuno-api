@@ -57,6 +57,9 @@ services:
       LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
+    
+    volumes:
+      - ./rds:/static/data
     depends_on:
       - maria
     networks:
@@ -71,6 +74,9 @@ services:
       LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
+    volumes:
+      - ./rds:/static/data
+
     depends_on:
       - maria
     networks:
