@@ -37,9 +37,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-      
-    restart:
-      - always
+
+    restart: unless-stopped
 
     volumes:
       - ./rds:/static/data:ro
