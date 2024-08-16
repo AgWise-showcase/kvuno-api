@@ -55,6 +55,7 @@ services:
 
   migration:
     image: masgeek/kvuno-api:${TAG_VERSION-latest}
+    container_name: migration
     command: ["alembic", "upgrade", "head"]
     environment:
       DEBUG_DB: ${DEBUG_DB-0}
@@ -72,6 +73,7 @@ services:
 
   housekeeper:
     image: masgeek/kvuno-api:${TAG_VERSION-latest}
+    container_name: housekeeper
     command: ["python3", "housekeeping.py"]
     environment:
       DEBUG_DB: ${DEBUG_DB-0}
