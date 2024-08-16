@@ -37,7 +37,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    
+
+    restart: unless-stopped
+
+    volumes:
+      - ./rds:/static/data:ro
+
     depends_on:
       - maria
       
@@ -59,7 +64,7 @@ services:
     restart: no
     
     volumes:
-      - ./rds:/static/data
+      - ./rds:/static/data:ro
     depends_on:
       - maria
     networks:
@@ -75,7 +80,7 @@ services:
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
     volumes:
-      - ./rds:/static/data
+      - ./rds:/static/data:ro
 
     depends_on:
       - maria
