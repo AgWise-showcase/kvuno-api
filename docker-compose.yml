@@ -57,6 +57,9 @@ services:
       LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
+    
+    volumes:
+      - ./rds:/static/data
     depends_on:
       - maria
     networks:
@@ -71,26 +74,13 @@ services:
       LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
+    volumes:
+      - ./rds:/static/data
+
     depends_on:
       - maria
     networks:
       - internal
-  
-  dozzle:
-    container_name: dozzle
-    hostname: dozzle
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    networks:
-      - web
-      - internal
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      DOZZLE_HOSTNAME: 'https://kvuno-api.eastus.cloudapp.azure.com'
-    ports:
-      - 9999:8080
-
 
 networks:
   internal:
