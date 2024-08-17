@@ -1,0 +1,107 @@
+name: "kvuno-api"
+
+services:
+  maria:
+    container_name: maria
+    hostname: maria
+    image: bitnami/mariadb:11.4.2
+    volumes:
+      - maria-db:/bitnami/mariadb
+      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
+      - ${PWD}/db-backup:/usr/fuelrod
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_HOST : "%"
+      MARIADB_ROOT_PASSWORD: ${DB_PASS}
+      MARIADB_DATABASE : ${DB_NAME}
+      MARIADB_USER : ${DB_USER}
+      MARIADB_PASSWORD : ${DB_PASS}
+    networks:
+     - internal
+     - web
+
+  kvuno:
+    container_name: kvuno
+    hostname: kvuno
+    image: masgeek/kvuno-api:${TAG_VERSION-latest}
+
+    environment:
+      DEBUG_DB: ${DEBUG_DB-0}
+      DB_URL: ${KVUNO_DB_URL}
+      LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
+      SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://kvuno:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    restart: unless-stopped
+
+    volumes:
+      - rds_data:/app/static/data:ro
+
+    depends_on:
+      - maria
+      
+    ports:
+      - "8080:5000"
+    
+    networks:
+      - web
+      - internal
+
+  migration:
+    image: masgeek/kvuno-api:${TAG_VERSION-latest}
+    container_name: migration
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DEBUG_DB: ${DEBUG_DB-0}
+      DB_URL: ${KVUNO_DB_URL}
+      LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
+      SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
+    restart: no
+    
+    volumes:
+      - rds_data:/app/static/data:ro
+    depends_on:
+      - maria
+    networks:
+      - internal
+
+  housekeeper:
+    image: masgeek/kvuno-api:${TAG_VERSION-latest}
+    container_name: housekeeper
+    command: ["python3", "housekeeping.py"]
+    environment:
+      DEBUG_DB: ${DEBUG_DB-0}
+      DB_URL: ${KVUNO_DB_URL}
+      LOG_LEVEL: ${KVUNO_LOG_LEVEL-info}
+      SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
+    restart: no
+    volumes:
+      - rds_data:/app/static/data:ro
+
+    depends_on:
+      - maria
+    networks:
+      - internal
+
+networks:
+  internal:
+    external: false
+  web:
+    external: true
+
+volumes:
+  maria-db:
+    name: maria-db
+    
+  rds_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./rds
+      o: bind
