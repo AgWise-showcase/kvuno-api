@@ -1,24 +1,22 @@
 name: "kvuno-api"
 
 services:
-  maria:
-    container_name: maria
-    hostname: maria
-    image: bitnami/mariadb:11.4.2
-    volumes:
-      - maria-db:/bitnami/mariadb
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-      - ${PWD}/db-backup:/usr/fuelrod
-    restart: unless-stopped
+  pgsql:
+    container_name: pgsql
+    hostname: pgsql
+    image: postgis/postgis:16-3.4
     environment:
-      MARIADB_ROOT_HOST : "%"
-      MARIADB_ROOT_PASSWORD: ${DB_PASS}
-      MARIADB_DATABASE : ${DB_NAME}
-      MARIADB_USER : ${DB_USER}
-      MARIADB_PASSWORD : ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
+      - ./pgsql/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh # Mount from pgsql folder
+    ports:
+      - "5432:5432"
     networks:
-     - internal
-     - web
+      - internal
+      - web
 
   kvuno:
     container_name: kvuno
@@ -41,7 +39,7 @@ services:
     restart: unless-stopped
 
     volumes:
-      - rds_data:/app/static/data:ro
+      - rds_data:/app/static/data:rw
 
     depends_on:
       - maria
@@ -82,7 +80,7 @@ services:
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
     volumes:
-      - rds_data:/app/static/data:ro
+      - rds_data:/app/static/data:rw
 
     depends_on:
       - maria
@@ -96,9 +94,10 @@ networks:
     external: true
 
 volumes:
-  maria-db:
-    name: maria-db
-    
+  pgsql-data:
+    name: pgsql-data
+    driver: local
+
   rds_data:
     driver: local
     driver_opts:
