@@ -1,24 +1,22 @@
 name: "kvuno-api"
 
 services:
-  maria:
-    container_name: maria
-    hostname: maria
-    image: bitnami/mariadb:11.4.2
-    volumes:
-      - maria-db:/bitnami/mariadb
-      - ${PWD}/db_conf/fuelrod:/etc/mysql/conf.d
-      - ${PWD}/db-backup:/usr/fuelrod
-    restart: unless-stopped
+  pgsql:
+    container_name: pgsql
+    hostname: pgsql
+    image: postgis/postgis:16-3.4
     environment:
-      MARIADB_ROOT_HOST : "%"
-      MARIADB_ROOT_PASSWORD: ${DB_PASS}
-      MARIADB_DATABASE : ${DB_NAME}
-      MARIADB_USER : ${DB_USER}
-      MARIADB_PASSWORD : ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - pgsql-data:/var/lib/postgresql/data
+      - ./pgsql/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh # Mount from pgsql folder
+    ports:
+      - "5432:5432"
     networks:
-     - internal
-     - web
+      - internal
+      - web
 
   kvuno:
     container_name: kvuno
@@ -41,10 +39,10 @@ services:
     restart: unless-stopped
 
     volumes:
-      - rds_data:/app/static/data:ro
+      - rds_data:/app/static/data:rw
 
     depends_on:
-      - maria
+      - pgsql
       
     ports:
       - "8080:5000"
@@ -67,7 +65,7 @@ services:
     volumes:
       - rds_data:/app/static/data:ro
     depends_on:
-      - maria
+      - pgsql
     networks:
       - internal
 
@@ -82,13 +80,35 @@ services:
       SERVER_URL_PROD: ${SERVER_URL_PROD-https://kvuno-api.eastus.cloudapp.azure.com}
     restart: no
     volumes:
-      - rds_data:/app/static/data:ro
+      - rds_data:/app/static/data:rw
 
     depends_on:
-      - maria
+      - pgsql
     networks:
       - internal
 
+  pgadmin:
+      container_name: pgadmin
+      hostname: pgadmin
+      image: dpage/pgadmin4
+      environment:
+        PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL:-dev@dev.com}
+        PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASS}
+        PGADMIN_CONFIG_SERVER_MODE: 'True'
+        PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+        PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
+      volumes:
+        - pg-admin:/var/lib/pgadmin
+
+      ports:
+        - "${PGADMIN_PORT:-5050}:80"
+      networks:
+        - web
+        - internal
+      restart: unless-stopped
+      depends_on:
+        - pgsql
+        
 networks:
   internal:
     external: false
@@ -96,9 +116,12 @@ networks:
     external: true
 
 volumes:
-  maria-db:
-    name: maria-db
-    
+  pgsql-data:
+    name: pgsql-data
+    driver: local
+  pg-admin:
+    name: pg-admin
+    driver: local
   rds_data:
     driver: local
     driver_opts:
