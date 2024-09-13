@@ -42,7 +42,7 @@ services:
       - rds_data:/app/static/data:rw
 
     depends_on:
-      - maria
+      - pgsql
       
     ports:
       - "8080:5000"
@@ -65,7 +65,7 @@ services:
     volumes:
       - rds_data:/app/static/data:ro
     depends_on:
-      - maria
+      - pgsql
     networks:
       - internal
 
@@ -83,7 +83,7 @@ services:
       - rds_data:/app/static/data:rw
 
     depends_on:
-      - maria
+      - pgsql
     networks:
       - internal
 
