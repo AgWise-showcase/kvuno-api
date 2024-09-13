@@ -42,7 +42,7 @@ services:
       - rds_data:/app/static/data:rw
 
     depends_on:
-      - maria
+      - pgsql
       
     ports:
       - "8080:5000"
@@ -65,7 +65,7 @@ services:
     volumes:
       - rds_data:/app/static/data:ro
     depends_on:
-      - maria
+      - pgsql
     networks:
       - internal
 
@@ -83,10 +83,32 @@ services:
       - rds_data:/app/static/data:rw
 
     depends_on:
-      - maria
+      - pgsql
     networks:
       - internal
 
+  pgadmin:
+      container_name: pgadmin
+      hostname: pgadmin
+      image: dpage/pgadmin4
+      environment:
+        PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL:-dev@dev.com}
+        PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASS}
+        PGADMIN_CONFIG_SERVER_MODE: 'True'
+        PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+        PGADMIN_CONFIG_LOGIN_BANNER: '"Authorised users only!"'
+      volumes:
+        - pg-admin:/var/lib/pgadmin
+
+      ports:
+        - "${PGADMIN_PORT:-5050}:80"
+      networks:
+        - web
+        - internal
+      restart: unless-stopped
+      depends_on:
+        - pgsql
+        
 networks:
   internal:
     external: false
