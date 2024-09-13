@@ -119,7 +119,9 @@ volumes:
   pgsql-data:
     name: pgsql-data
     driver: local
-
+  pg-admin:
+    name: pg-admin
+    driver: local
   rds_data:
     driver: local
     driver_opts:
