@@ -117,7 +117,7 @@ networks:
 
 volumes:
   pgsql-data:
-    name: pgsql-data
+    name: crop-data
     driver: local
   pg-admin:
     name: pg-admin
