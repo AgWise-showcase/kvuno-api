@@ -5,6 +5,7 @@ services:
     container_name: pgsql
     hostname: pgsql
     image: postgis/postgis:16-3.4
+    restart: always
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
